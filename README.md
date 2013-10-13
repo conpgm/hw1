@@ -1,2 +1,1 @@
-hw1
-================
+This is the first home assignment for concurent programming
