@@ -16,7 +16,6 @@ public class WorkerThread<T> extends Thread {
 	}
 
 	public void run() {
-		// TODO: Implement WorkerThread.run().
 		while (!stopped) {
 			try {
 				T obj = handler.getHandle().read();			
@@ -33,7 +32,6 @@ public class WorkerThread<T> extends Thread {
 	}
 
 	public void cancelThread() {
-		// TODO: Implement WorkerThread.cancelThread().
 		if (isAlive()) {
 			stopped = true;
 			interrupt();

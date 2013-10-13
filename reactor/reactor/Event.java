@@ -20,7 +20,6 @@ public class Event<T> {
 	}
 
 	public void handle() {
-		// TODO: Implement Event.handle().
 		handler.handleEvent(event);
 	}
 }

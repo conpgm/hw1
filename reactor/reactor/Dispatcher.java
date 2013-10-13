@@ -19,14 +19,12 @@ public class Dispatcher {
 	}
 
 	public Dispatcher(int capacity) {
-		// TODO: Implement Dispatcher(int).
 		queue = new BlockingEventQueue<Object>(capacity);
 		hMap = new HashMap<EventHandler<?>, WorkerThread<?>>();
 		running = true;
 	}
 
 	public void handleEvents() throws InterruptedException {
-		// TODO: Implement Dispatcher.handleEvents().
 		while (running) {
 			try {
 				Event<?> event = select();
@@ -45,13 +43,10 @@ public class Dispatcher {
 	}
 
 	public Event<?> select() throws InterruptedException {
-		// throw new UnsupportedOperationException();
-		// TODO: Implement Dispatcher.select().
 		return queue.get();
 	}
 
 	public synchronized void addHandler(EventHandler<?> h) {
-		// TODO: Implement Dispatcher.addHandler(EventHandler).
 		if (!hMap.containsKey(h)) {
 			WorkerThread<?> thread = new WorkerThread<>(h, queue);
 			thread.start();
@@ -62,7 +57,6 @@ public class Dispatcher {
 	}
 
 	public synchronized void removeHandler(EventHandler<?> h) {
-		// TODO: Implement Dispatcher.removeHandler(EventHandler).
 		if (hMap.containsKey(h)) {
 			
 			hMap.get(h).cancelThread();
