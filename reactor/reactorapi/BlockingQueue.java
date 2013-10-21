@@ -33,8 +33,9 @@ public interface BlockingQueue<T> {
 	 * implemented for bonus points.
 	 * 
 	 * @return the entire queue
+	 * @throws InterruptedException 
 	 */
-	public List<T> getAll();
+	public List<T> getAll() throws InterruptedException;
 
 	/**
 	 * Get the capacity of the queue.
