@@ -14,4 +14,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="hangman.HangmanServer"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="concurrency 10"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="reactor"/>
+<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:reactor/bin}"/>
 </launchConfiguration>

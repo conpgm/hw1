@@ -2,12 +2,13 @@ package reactor;
 
 import reactorapi.BlockingQueue;
 
-import java.util.LinkedList;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.List;
 
 
 class CountingSemaphore {
-	private int value;
+	private volatile int value;
 
 	CountingSemaphore(int permits) {
 		value = permits;
@@ -15,13 +16,16 @@ class CountingSemaphore {
 	
 	public synchronized void acquire() throws InterruptedException{
 		while(value == 0) wait();
+//		System.out.println("acquire " + value);
 		value--;
 	}
 	
 	public synchronized int drain() throws InterruptedException {	
 		while (value == 0) wait();
+		
+//		System.out.println("drain " + value);
 		int tmp = value;
-		value = 0; 
+		value = 0;
 		return tmp;
 	}
 	
@@ -32,28 +36,28 @@ class CountingSemaphore {
 	
 	public synchronized void release(int permits) {
 		value += permits;
-		for (int i = 0; i < permits; i++) 
-			notify();
+		notifyAll();
 	}
 }
 
 public class BlockingEventQueue<T> implements BlockingQueue<Event<? extends T>> {
 	
 	private final int capacity;
-	private final LinkedList<Event<? extends T>> ll;
+	private final ArrayDeque<Event<? extends T>> queue;
 	
 	private CountingSemaphore notEmpty, notFull;
 	
 	public BlockingEventQueue(int capacity) {
-		ll = new LinkedList<Event<? extends T>>();
+		queue = new ArrayDeque<Event<? extends T>>(capacity);
 		this.capacity = capacity;
 		
 		notEmpty = new CountingSemaphore(0);
 		notFull = new CountingSemaphore(capacity);
+		System.out.println("init size " + capacity);
 	}
 
 	public int getSize() {
-		return ll.size();
+		return queue.size();
 	}
 
 	public int getCapacity() {
@@ -61,21 +65,13 @@ public class BlockingEventQueue<T> implements BlockingQueue<Event<? extends T>> 
 	}
 
 	public Event<? extends T> get() throws InterruptedException {
-//		while (ll.size() == 0) {
-//			wait();
-//		}
-//		
-//		if (ll.size() == capacity) {
-//			notifyAll();
-//		}
-//		
-//		return ll.remove();
-		
+
 		notEmpty.acquire();
 		
 		Event<? extends T> event;
-		synchronized (ll) {
-			event = ll.remove();
+		synchronized (queue) {
+			System.out.println("get 1");
+			event = queue.remove();
 		}
 		
 		notFull.release();
@@ -84,31 +80,24 @@ public class BlockingEventQueue<T> implements BlockingQueue<Event<? extends T>> 
 	}
 
 	public List<Event<? extends T>> getAll() throws InterruptedException {
-//		try {
-//			while (ll.size() == 0) {
-//				wait();
-//			}
-//		} catch (InterruptedException e) {
-//			return new LinkedList<Event<? extends T>>();
-//		}
-//		
-//		
-//		if (ll.size() == capacity) {
-//			notifyAll();
-//		}
 		
 		int permits = notEmpty.drain();
 
-		LinkedList<Event<? extends T>> eventList;
-		synchronized (ll) {
-			// deep copy and then clear
-			eventList = new LinkedList<Event<? extends T>>(ll);
-			ll.clear();
+//		System.out.println(permits);
+		ArrayList<Event<? extends T>> list;
+		synchronized (queue) {
+			System.out.println("getAll " + permits);
+			list = new ArrayList<Event<? extends T>>(permits);
+
+			for (int i = 0; i < permits; i++) {
+				list.add(queue.remove());
+			}
+			
 		}	
 		
 		notFull.release(permits);
 		
-		return eventList;
+		return list;
 	}
 
 	public void put(Event<? extends T> event) throws InterruptedException {
@@ -124,8 +113,9 @@ public class BlockingEventQueue<T> implements BlockingQueue<Event<? extends T>> 
 		
 		notFull.acquire();
 		
-		synchronized (ll) {
-			ll.add(event);
+		synchronized (queue) {
+			System.out.println(event.getEvent());
+			queue.add(event);
 		}
 		
 		notEmpty.release();
