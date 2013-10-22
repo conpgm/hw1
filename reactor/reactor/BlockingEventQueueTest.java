@@ -53,6 +53,8 @@ class Consumer implements Runnable {
 	private final int numTrials;
 	private final AtomicInteger popSum;
 	
+	private static final boolean testGetAll = true;
+	
 	public Consumer (BlockingEventQueue<Integer> bq, int numTrials, AtomicInteger popSum) {
 		this.bq = bq;
 		this.numTrials = numTrials;
@@ -63,26 +65,37 @@ class Consumer implements Runnable {
 		int sum = 0;
 		for (int i = 0; i < numTrials; i++) {
 			try {
-				popSum.getAndAdd(bq.get().getEvent());
-				popSum.getAndAdd(bq.get().getEvent());
-				List<Event<? extends Integer>> list = bq.getAll();
-				Iterator<Event<? extends Integer>> itr = list.iterator();
-				while(itr.hasNext()) {
-					Event<? extends Integer> element = itr.next();
+				if (testGetAll) {
+					// Apart from getAll() method, test get() method as well
+					sum = bq.get().getEvent();
+					popSum.getAndAdd(sum);
+
+					// we should invoke AtomInteger methods as much as possible to improve performance
+					// Here we use local variable to save the sum value
+					List<Event<? extends Integer>> list = bq.getAll();
+					Iterator<Event<? extends Integer>> itr = list.iterator();
+					sum = 0;
+					while(itr.hasNext()) {
+						Event<? extends Integer> element = itr.next();
+						sum += element.getEvent();
+					}
+					popSum.getAndAdd(sum);
 					
-					popSum.getAndAdd(element.getEvent());
-					
-//					sum += element.getEvent();
-//					System.out.println("sum " + popSum.get());
-				}
-				Thread.sleep(100);
+					// slow consumption so as to give producer more time to produce items 
+					Thread.sleep(100);					
+				} else {
+					sum += bq.get().getEvent();
+				}				
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
-		
+
 			Thread.yield();
 		}
-		//popSum.getAndAdd(sum);
+
+		if (!testGetAll) {
+			popSum.getAndAdd(sum);
+		}
 	}
 }
 
@@ -103,14 +116,10 @@ public class BlockingEventQueueTest {
 			}
 			
 			pool.shutdown();
-			if (pool.awaitTermination(60, TimeUnit.SECONDS)) {
-				System.out.println(Integer.toString(pushSum.get()) + " " + Integer.toString(popSum.get()));
-				assertTrue(pushSum.get() == popSum.get());
-			} else {
-				System.out.println("timeout " + Integer.toString(pushSum.get()) + " " + Integer.toString(popSum.get()));
-				assertTrue(pushSum.get() == popSum.get());
-				//fail("Test safety timeout.");
-			}
+			pool.awaitTermination(60, TimeUnit.SECONDS);
+			
+			System.out.println("sum:" + pushSum.get() + " " + popSum.get());
+			assertTrue(pushSum.get() == popSum.get());
 		} catch (Exception e) {
 			fail("Test safety failed.");
 		}
