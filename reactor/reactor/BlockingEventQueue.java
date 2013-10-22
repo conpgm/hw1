@@ -69,7 +69,6 @@ public class BlockingEventQueue<T> implements BlockingQueue<Event<? extends T>> 
 		Event<? extends T> event;
 		synchronized (queue) {
 			event = queue.remove();
-//			System.out.println("get 1");
 		}
 		
 		notFull.release();
@@ -77,19 +76,22 @@ public class BlockingEventQueue<T> implements BlockingQueue<Event<? extends T>> 
 		return event;
 	}
 
-	public List<Event<? extends T>> getAll() throws InterruptedException {
+	public List<Event<? extends T>> getAll() {
 		
-		int permits = notEmpty.drain();
+		int permits = 0;
+		
+		try {
+			permits = notEmpty.drain();
+		} catch (InterruptedException e) {
+			return new ArrayList<Event<? extends T>>();
+		}
 
 		ArrayList<Event<? extends T>> list;
-		synchronized (queue) {
-			
+		synchronized (queue) {			
 			list = new ArrayList<Event<? extends T>>(permits);
-
 			for (int i = 0; i < permits; i++) {
 				list.add(queue.remove());
 			}
-//			System.out.println("getAll " + permits);
 		}	
 		
 		notFull.release(permits);
@@ -103,10 +105,8 @@ public class BlockingEventQueue<T> implements BlockingQueue<Event<? extends T>> 
 		
 		synchronized (queue) {
 			queue.add(event);
-//			System.out.println(event.getEvent());
 		}
 		
 		notEmpty.release();
 	}
-	// Add other methods and variables here as needed.
 }
