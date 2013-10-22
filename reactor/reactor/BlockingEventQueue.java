@@ -16,14 +16,12 @@ class CountingSemaphore {
 	
 	public synchronized void acquire() throws InterruptedException{
 		while(value == 0) wait();
-//		System.out.println("acquire " + value);
 		value--;
 	}
 	
 	public synchronized int drain() throws InterruptedException {	
 		while (value == 0) wait();
 		
-//		System.out.println("drain " + value);
 		int tmp = value;
 		value = 0;
 		return tmp;
@@ -36,7 +34,8 @@ class CountingSemaphore {
 	
 	public synchronized void release(int permits) {
 		value += permits;
-		notifyAll();
+		for (int i = 0; i < permits; i++)
+			notify();
 	}
 }
 
@@ -53,7 +52,6 @@ public class BlockingEventQueue<T> implements BlockingQueue<Event<? extends T>> 
 		
 		notEmpty = new CountingSemaphore(0);
 		notFull = new CountingSemaphore(capacity);
-		System.out.println("init size " + capacity);
 	}
 
 	public int getSize() {
@@ -70,8 +68,8 @@ public class BlockingEventQueue<T> implements BlockingQueue<Event<? extends T>> 
 		
 		Event<? extends T> event;
 		synchronized (queue) {
-			System.out.println("get 1");
 			event = queue.remove();
+//			System.out.println("get 1");
 		}
 		
 		notFull.release();
@@ -83,16 +81,15 @@ public class BlockingEventQueue<T> implements BlockingQueue<Event<? extends T>> 
 		
 		int permits = notEmpty.drain();
 
-//		System.out.println(permits);
 		ArrayList<Event<? extends T>> list;
 		synchronized (queue) {
-			System.out.println("getAll " + permits);
+			
 			list = new ArrayList<Event<? extends T>>(permits);
 
 			for (int i = 0; i < permits; i++) {
 				list.add(queue.remove());
 			}
-			
+//			System.out.println("getAll " + permits);
 		}	
 		
 		notFull.release(permits);
@@ -101,25 +98,15 @@ public class BlockingEventQueue<T> implements BlockingQueue<Event<? extends T>> 
 	}
 
 	public void put(Event<? extends T> event) throws InterruptedException {
-//		while (ll.size() == capacity) {
-//				wait();
-//		}
-//		
-//		if (ll.size() == 0) {
-//			notifyAll();
-//		}
-//
-//		ll.add(event);
 		
 		notFull.acquire();
 		
 		synchronized (queue) {
-			System.out.println(event.getEvent());
 			queue.add(event);
+//			System.out.println(event.getEvent());
 		}
 		
 		notEmpty.release();
 	}
-
 	// Add other methods and variables here as needed.
 }
