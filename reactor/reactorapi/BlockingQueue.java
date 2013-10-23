@@ -33,7 +33,6 @@ public interface BlockingQueue<T> {
 	 * implemented for bonus points.
 	 * 
 	 * @return the entire queue
-	 * @throws InterruptedException 
 	 */
 	public List<T> getAll();
 
