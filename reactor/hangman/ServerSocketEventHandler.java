@@ -1,9 +1,8 @@
-package hangmanrules;
+package hangman;
 
 import java.io.*;
 import java.net.*;
 import reactorapi.*;
-
 import reactor.Dispatcher;
 
 class ServerSocketHandle implements Handle<Socket> {
@@ -28,7 +27,8 @@ class ServerSocketHandle implements Handle<Socket> {
 
 	public void close() {
 		try {
-			sSocket.close();
+			if (!sSocket.isClosed())
+				sSocket.close();
 		} catch (IOException e) {
 			return;
 		}
@@ -36,14 +36,16 @@ class ServerSocketHandle implements Handle<Socket> {
 }
 
 
-public class ServerSocketHandler implements EventHandler<Socket> {
+public class ServerSocketEventHandler implements EventHandler<Socket> {
 
 	private ServerSocketHandle handle;
 	private Dispatcher dp;
+	private HangmanRules<ClientSocketHandle> hr;
 	
-	public ServerSocketHandler (Dispatcher dp) throws IOException {
-		this.dp = dp;
+	public ServerSocketEventHandler (Dispatcher dp, HangmanRules<ClientSocketHandle> hr) throws IOException {
 		handle = new ServerSocketHandle();
+		this.dp = dp;
+		this.hr = hr;
 	}
 	
 	@Override
@@ -53,6 +55,22 @@ public class ServerSocketHandler implements EventHandler<Socket> {
 
 	@Override
 	public void handleEvent(Socket s) {
-		dp.addHandler(new ClientSocketHandler(s));
+		// game has ended
+		if (s == null) {
+			handle.close();
+			return ;
+		}
+		
+		// establish client connection
+		try {
+			dp.addHandler(new ClientSocketEventHandler(hr, handle, s));
+		} catch (RuntimeException e) {
+			System.err.println(e.getMessage());
+			try {
+				s.close();
+			} catch (IOException e1) {
+				return;
+			}
+		}
 	}
 }

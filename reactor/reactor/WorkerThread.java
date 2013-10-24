@@ -13,8 +13,6 @@ public class WorkerThread<T> extends Thread {
 		handler = eh;
 		queue = q;
 		stopped = false;
-		
-//		System.out.println(this.getName() + " initializing...");
 	}
 
 	public void run() {

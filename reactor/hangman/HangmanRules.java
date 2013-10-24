@@ -1,5 +1,6 @@
-package hangmanrules;
+package hangman;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.LinkedList;
 
@@ -171,5 +172,22 @@ public class HangmanRules<T> {
 	 */
 	public List<Player> getPlayers() {
 		return new LinkedList<Player>(players);
+	}
+	
+	/**
+	 * Get player by player data
+	 * 
+	 * @param t
+	 * 			player data
+	 * @return 
+	 * 			the player who has t, null if no player
+	 */
+	public Player getPlayerByData(T t) {
+		Iterator<Player> itr = players.iterator();
+		while (itr.hasNext()) {
+			Player player = itr.next();
+			if (player.playerData.equals(t)) return player;
+		}
+		return null;
 	}
 }
