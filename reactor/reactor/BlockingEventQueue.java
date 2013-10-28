@@ -55,7 +55,11 @@ public class BlockingEventQueue<T> implements BlockingQueue<Event<? extends T>> 
 	}
 
 	public int getSize() {
-		return queue.size();
+		int size;
+		synchronized (queue) {
+			size = queue.size();
+		}
+		return size;
 	}
 
 	public int getCapacity() {
